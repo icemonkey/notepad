@@ -13,7 +13,7 @@ INSTALLED_APPS = [rest_framework,]
 from django.conf.urls import url,include
 urlpatterns = [
     url(r'^icemonkey/',include('icemonkey.urls')),
-    #rest_framework 参考 https://www.jianshu.com/p/653a0a5684eb
+    #rest_framework 参考 https://www.jianshu.com/p/653a0a5684eb http://www.chenxm.cc/post/289.html
     url(r'^icemonkey/api/', include('icemonkey.urls_api')),
 ]
 
