@@ -1,0 +1,133 @@
+备注
+app icemonkey
+
+1.安装
+pip install djangorestframework
+pip install markdown
+pip install django-filter
+
+2.注册settings.py
+INSTALLED_APPS = [rest_framework,]
+
+3.全局路由urls.py
+from django.conf.urls import url,include
+urlpatterns = [
+    url(r'^icemonkey/',include('icemonkey.urls')),
+    #rest_framework 参考 https://www.jianshu.com/p/653a0a5684eb
+    url(r'^icemonkey/api/', include('icemonkey.urls')),
+]
+
+4.创建模型 icemonkey/models.py
+class Task(models.Model):
+    title = models.CharField('标题', max_length=100)
+    description = models.TextField('描述')
+    completed = models.BooleanField('是否完成', default=False)
+    create_date = models.DateTimeField('创建时间', auto_now_add=True)
+
+    def __unicode__(self):
+        return self.title
+        
+5.序列化 icemonkey/serializers.py
+from rest_framework import serializers
+from models import Task
+
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ('id', 'title', 'description', 'completed', 'create_date')
+
+6.视图 icemonkey/views.py    
+# -*- coding:utf-8 -*-
+from rest_framework.decorators import api_view
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import generics
+
+from models import Task
+from serializers import TaskSerializer
+
+
+# 第一种方式：APIView
+class TaskList(APIView):
+    def get(self, request, format=None):
+        tasks = Task.objects.all()
+        serializer = TaskSerializer(tasks, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = TaskSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# 第二种方式：通用视图 ListCreateAPIView
+class TaskListCreate(generics.ListCreateAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+
+# 第三种方式：装饰器 api_view
+@api_view(['GET', 'POST'])
+def task_list(request):
+    '''
+    List all tasks, or create a new task.
+    '''
+    if request.method == 'GET':
+        tasks = Task.objects.all()
+        serializer = TaskSerializer(tasks, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = TaskSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def task_detail(request, pk):
+    try:
+        task = Task.objects.get(pk=pk)
+    except Task.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = TaskSerializer(task)
+        return Response(serializer.data)
+    elif request.method == 'PUT':
+        serializer = TaskSerializer(task, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        task.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+7.路由 icemonkey/urls.py
+# -*- coding:utf-8 -*-
+from django.conf.urls import  url
+from . import views
+
+urlpatterns = [
+    url(r'^tasks/$', views.task_list, name='task_list'),
+    # url(r'^tasks/$', views.TaskList.as_view(), name='task_list'),
+    # url(r'^tasks/$', views.TaskListCreate.as_view(), name='task_list'),
+    url(r'^tasks/(?P<pk>[0-9]+)$', views.task_detail, name='task_detail'),
+]
+
+8.测试
+curl http://localhost:8000/api/tasks/
+curl -X POST http://localhost:8000/api/tasks/ -d "title=hello world&description=a whole new world"
+curl -X PUT http://localhost:8000/api/tasks/1 -d "title=hello world&description=be nice"
+curl -X DELETE http://localhost:8000/api/tasks/1
+
+
+        
+  
