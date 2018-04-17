@@ -14,7 +14,7 @@ from django.conf.urls import url,include
 urlpatterns = [
     url(r'^icemonkey/',include('icemonkey.urls')),
     #rest_framework 参考 https://www.jianshu.com/p/653a0a5684eb
-    url(r'^icemonkey/api/', include('icemonkey.urls')),
+    url(r'^icemonkey/api/', include('icemonkey.urls_api')),
 ]
 
 4.创建模型 icemonkey/models.py
@@ -110,7 +110,7 @@ def task_detail(request, pk):
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-7.路由 icemonkey/urls.py
+7.路由 icemonkey/urls_api.py
 # -*- coding:utf-8 -*-
 from django.conf.urls import  url
 from . import views
