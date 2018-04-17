@@ -36,7 +36,7 @@ class TaskSerializer(serializers.ModelSerializer):
         model = Task
         fields = ('id', 'title', 'description', 'completed', 'create_date')
 
-6.视图 icemonkey/views.py    
+6.视图 icemonkey/views_api.py    
 # -*- coding:utf-8 -*-
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -113,7 +113,7 @@ def task_detail(request, pk):
 7.路由 icemonkey/urls_api.py
 # -*- coding:utf-8 -*-
 from django.conf.urls import  url
-from . import views
+from . import views_api as views
 
 urlpatterns = [
     url(r'^tasks/$', views.task_list, name='task_list'),
